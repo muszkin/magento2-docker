@@ -3,6 +3,7 @@ ARG IDEKEY
 ARG XDEBUG
 ARG MEMORY_LIMIT
 
+COPY php.ini /usr/local/etc/php/php.ini
 RUN apk --update --no-cache add \ 
     bash \
     shadow \
@@ -50,17 +51,8 @@ RUN apk --update --no-cache add \
     && echo "xdebug.idekey=${IDEKEY}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
     fi \
-	&& apk add composer 
-COPY php.ini /usr/local/etc/php/php.ini
-RUN sed -i 's/memory_limit = .*/memory_limit = '${MEMORY_LIMIT}'/' /usr/local/etc/php/php.ini 
-#COPY src/ /var/www/html
-#RUN mkdir -p /root/.composer
-#COPY auth.json /root/.composer/auth.json
-COPY entrypoint.sh /root/entrypoint.sh
-#COPY edrone.xml /var/www/html/edrone.xml
-RUN chmod +x /root/entrypoint.sh
-#COPY --from=composer /usr/bin/composer /usr/bin/composer
+	&& apk add composer \
+	&& sed -i 's/memory_limit = .*/memory_limit = '${MEMORY_LIMIT}'/' /usr/local/etc/php/php.ini 
 WORKDIR /var/www/html
-#CMD composer install --ignore-platform-reqs -o ;  php-fpm
 ENTRYPOINT [ "/root/entrypoint.sh"]
 EXPOSE 9000

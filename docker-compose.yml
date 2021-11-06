@@ -25,7 +25,7 @@ services:
       - ./php/src:/var/www/html
       - ./php/auth.json:/root/.composer/auth.json
       - ./php/edrone.xml:/var/www/html/edrone.xml
-      - ./php/customer-data.patch:/var/www/html/customer-data.patch
+      - ./php/entrypoint.sh:/root/entrypoint.sh
     depends_on:
       - db
       - redis

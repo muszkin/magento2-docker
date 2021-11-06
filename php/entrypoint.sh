@@ -10,8 +10,8 @@ log() {
 }
 
 setup() {
-    cd /var/www/html 
-    bin/magento setup:install --base-url="http://localhost:7071" \
+    cd /var/www/html
+    [ ! -f ./.installed ] && bin/magento setup:install --base-url="http://localhost:7071" \
             --db-host="$MYSQL_HOST" --db-name="$MYSQL_DB" --db-user="$MYSQL_USER" --db-password="$MYSQL_PASSWORD" \
             --admin-firstname="Edrone" --admin-lastname="Admin" --admin-email="admin@edrone.me" \
             --admin-user="admin" --admin-password="admin123" --language="pl_PL" \
@@ -20,15 +20,30 @@ setup() {
             --elasticsearch-port="9200" --session-save="redis" --cache-backend="redis" --cache-backend-redis-server="$REDIS_HOST" \
             --cache-backend-redis-db="1" --page-cache="redis" --page-cache-redis-server="$REDIS_HOST" --page-cache-redis-db="2" \
             --amqp-host="$RABBITMQ_HOST" --amqp-port="$RABBITMQ_PORT" --amqp-user="$RABBITMQ_USER" --amqp-password="$RABBITMQ_PASSWORD"
-    bin/magento setup:config:set --backend-frontname="admin"
-    bin/magento module:disable Magento_TwoFactorAuth
-    composer require edrone/magento2module cweagans/composer-patches
-    bin/magento module:enable Edrone_Magento2module
-    bin/magento deploy:mode:set developer
-    bin/magento setup:upgrade
-    bin/magento cron:install --force
-    bin/magento setup:perf:generate-fixtures /var/www/html/edrone.xml
-    bin/magento c:f
+    if [ $? -eq 0 ]; then
+        touch ./.installed
+    else
+        [ -f ./.installed ] && rm -f ./.installed
+    fi
+    [ ! -f ./.basicSetup ] && bin/magento setup:config:set --backend-frontname="admin" \
+        && bin/magento module:disable Magento_TwoFactorAuth \
+        && composer require edrone/magento2module cweagans/composer-patches \
+        && bin/magento module:enable Edrone_Magento2module \
+        && bin/magento deploy:mode:set developer \
+        && bin/magento setup:upgrade \
+        && bin/magento cron:install --force
+    if [ $? -eq 0 ]; then
+        touch ./.basicSetup
+    else
+        [ -f ./.basicSetup ] rm -f ./.basicSetup
+    fi
+    [ ! -f ./.sampleDataInstalled ] && bin/magento setup:perf:generate-fixtures /var/www/html/edrone.xml
+    if [ $? -eq 0 ]; then
+        touch ./.sampleDataInstalled
+        bin/magento c:f
+    else
+        [ -f ./.sampleDataInstalled ] rm -f ./.sampleDataInstalled
+    fi
     log "You can now log into admin panel on http://localhost:7071/admin or visit site on http://localhost:7071/"
     php-fpm
 }
