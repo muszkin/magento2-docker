@@ -1,0 +1,97 @@
+From 240253770cf2c41430d494c17730fe6484cbc18f Mon Sep 17 00:00:00 2001
+From: Ihor Sviziev <svizev.igor@gmail.com>
+Date: Tue, 2 Feb 2021 17:29:09 +0200
+Subject: [PATCH 1/2] Fix js errors in customer data when component not
+ initialized
+
+---
+ .../view/frontend/web/js/customer-data.js     | 28 +++++++++++++------
+ 1 file changed, 19 insertions(+), 9 deletions(-)
+
+diff --git a/vendor/magento/module-customer/view/frontend/web/js/customer-data.js b/vendor/magento/module-customer/view/frontend/web/js/customer-data.js
+index 2d7e26ecef76..854e80b5e35c 100644
+--- a/vendor/magento/module-customer/view/frontend/web/js/customer-data.js
++++ b/vendor/magento/module-customer/view/frontend/web/js/customer-data.js
+@@ -17,7 +17,9 @@ define([
+ ], function ($, _, ko, sectionConfig, url) {
+     'use strict';
+ 
+-    var options = {},
++    var options = {
++            cookieLifeTime: 86400 //1 day by default
++        },
+         storage,
+         storageInvalidation,
+         invalidateCacheBySessionTimeOut,
+@@ -30,6 +32,18 @@ define([
+     url.setBaseUrl(window.BASE_URL);
+     options.sectionLoadUrl = url.build('customer/section/load');
+ 
+    function initStorage() {
+        $.cookieStorage.setConf({
+            path: '/',
+            expires: new Date(Date.now() + parseInt(options.cookieLifeTime, 10) * 1000)
+        });
+        storage = $.initNamespaceStorage('mage-cache-storage').localStorage;
+        storageInvalidation = $.initNamespaceStorage('mage-cache-storage-section-invalidation').localStorage;
+    }
+
+    // Initialize storage with default parameters to prevent JS errors while component still not initialized
+    initStorage();
++
+     /**
+      * @param {Object} invalidateOptions
+      */
+@@ -216,14 +230,7 @@ define([
+         /**
+          * Storage init
+          */
+-        initStorage: function () {
+-            $.cookieStorage.setConf({
+-                path: '/',
+-                expires: new Date(Date.now() + parseInt(options.cookieLifeTime, 10) * 1000)
+-            });
+-            storage = $.initNamespaceStorage('mage-cache-storage').localStorage;
+-            storageInvalidation = $.initNamespaceStorage('mage-cache-storage-section-invalidation').localStorage;
+-        },
++        initStorage: initStorage,
+ 
+         /**
+          * Retrieve the list of sections that has expired since last page reload.
+@@ -363,7 +370,10 @@ define([
+          */
+         'Magento_Customer/js/customer-data': function (settings) {
+             options = settings;
++
++            // re-init storage with a new settings
+             customerData.initStorage();
++
+             invalidateCacheBySessionTimeOut(settings);
+             invalidateCacheByCloseCookieSession();
+             customerData.init();
+
+From 43ed528974031bf41e8cf94b51566b8e1feb24a5 Mon Sep 17 00:00:00 2001
+From: Ihor Sviziev <svizev.igor@gmail.com>
+Date: Wed, 3 Feb 2021 10:37:48 +0200
+Subject: [PATCH 2/2] Fix js errors in customer data when component not
+ initialized
+
+Fix static tests
+---
+ .../Magento/Customer/view/frontend/web/js/customer-data.js     | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/vendor/magento/module-customer/view/frontend/web/js/customer-data.js b/vendor/magento/module-customer/view/frontend/web/js/customer-data.js
+index 854e80b5e35c..3b08676c8b32 100644
+--- a/vendor/magento/module-customer/view/frontend/web/js/customer-data.js
++++ b/vendor/magento/module-customer/view/frontend/web/js/customer-data.js
+@@ -32,6 +32,9 @@ define([
+     url.setBaseUrl(window.BASE_URL);
+     options.sectionLoadUrl = url.build('customer/section/load');
+ 
++    /**
++     * Storage initialization
++     */
+     function initStorage() {
+         $.cookieStorage.setConf({
+             path: '/',

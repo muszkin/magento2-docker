@@ -1,0 +1,94 @@
+version: '3'
+
+services:
+  php:
+    networks:
+      - magento
+    build:
+      context: ./php
+      args:
+        IDEKEY: magento.edrone.me
+        XDEBUG: "False"
+        MEMORY_LIMIT: 4G
+    environment:
+      ES_HOST: elasticsearch
+      REDIS_HOST: redis
+      MYSQL_HOST: db
+      MYSQL_USER: magento
+      MYSQL_PASSWORD: magento
+      MYSQL_DB: magento
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5672
+    volumes:
+      - ./php/src:/var/www/html
+      - ./php/auth.json:/root/.composer/auth.json
+      - ./php/edrone.xml:/var/www/html/edrone.xml
+      - ./php/customer-data.patch:/var/www/html/customer-data.patch
+    depends_on:
+      - db
+      - redis
+      - elasticsearch
+  nginx:
+    networks:
+      - magento
+    build:
+      context: ./nginx
+      args:
+        MEMORY_LIMIT: 4G
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+      - ./php/src:/var/www/html
+    ports:
+      - "7071:80"
+    depends_on:
+      - php
+      - db
+      - elasticsearch
+      - redis
+  db:
+    networks:
+      - magento
+    image: mariadb:10.4
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=pq9As4fa
+      - MARIADB_AUTHENTICATION_PLUGIN=mysql_native
+      - MARIADB_DATABASE=magento
+      - MARIADB_USER=magento
+      - MARIADB_PASSWORD=magento
+      - MARIADB_INITDB_SKIP_TZINFO=true
+    volumes:
+      - ./db/data:/var/lib/mysql
+  elasticsearch:
+    networks:
+      - magento
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.ml.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./es/data:/usr/share/elasticsearch/data
+  redis:
+    networks:
+      - magento
+    image: 'bitnami/redis:latest'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes  
+  rabbitmq:
+    networks:
+      - magento
+    image: 'rabbitmq:alpine'
+
+networks:
+  magento:
+    driver: bridge
