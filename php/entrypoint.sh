@@ -22,8 +22,6 @@ setup() {
             --amqp-host="$RABBITMQ_HOST" --amqp-port="$RABBITMQ_PORT" --amqp-user="$RABBITMQ_USER" --amqp-password="$RABBITMQ_PASSWORD"
     if [ $? -eq 0 ]; then
         touch ./.installed
-    else
-        [ -f ./.installed ] && rm -f ./.installed
     fi
     [ ! -f ./.basicSetup ] && bin/magento setup:config:set --backend-frontname="admin" \
         && bin/magento module:disable Magento_TwoFactorAuth \
@@ -34,15 +32,11 @@ setup() {
         && bin/magento cron:install --force
     if [ $? -eq 0 ]; then
         touch ./.basicSetup
-    else
-        [ -f ./.basicSetup ] rm -f ./.basicSetup
     fi
     [ ! -f ./.sampleDataInstalled ] && bin/magento setup:perf:generate-fixtures /var/www/html/edrone.xml
     if [ $? -eq 0 ]; then
         touch ./.sampleDataInstalled
         bin/magento c:f
-    else
-        [ -f ./.sampleDataInstalled ] rm -f ./.sampleDataInstalled
     fi
     log "You can now log into admin panel on http://localhost:7071/admin or visit site on http://localhost:7071/"
     php-fpm
@@ -59,7 +53,7 @@ check_es() {
 }
 
 check_redis() {
-    log "Checking Elasticsearch host: $REDIS_HOST"
+    log "Checking Redis host: $REDIS_HOST"
     while ! ping -c1 $REDIS_HOST &>/dev/null; do log "Trying connection to redis ($REDIS_HOST)"; sleep 1; done ; echo 0 
 }
 
