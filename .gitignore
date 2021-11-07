@@ -1,0 +1,7 @@
+php/src
+db/data
+nginx/logs/*
+php/auth.json
+nginx/nginx.conf.sample
+**/.DS_Store
+.idea
