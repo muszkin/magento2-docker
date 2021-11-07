@@ -4,6 +4,7 @@ ARG XDEBUG
 ARG MEMORY_LIMIT
 
 COPY php.ini /usr/local/etc/php/php.ini
+COPY entrypoint.sh /root/entrypoint.sh
 RUN apk --update --no-cache add \ 
     bash \
     shadow \
