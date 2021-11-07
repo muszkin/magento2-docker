@@ -1,8 +1,0 @@
-/php/src
-/es/data
-/db/data
-/nginx/logs/*
-!/nginx/logs/.gitkeep
-**/.DS_Store
-/php/auth.json
-
