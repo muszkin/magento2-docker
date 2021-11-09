@@ -53,7 +53,6 @@ services:
     networks:
       - magento
     image: mariadb:10.4
-    restart: always
     environment:
       - MARIADB_ROOT_PASSWORD=pq9As4fa
       - MARIADB_AUTHENTICATION_PLUGIN=mysql_native
